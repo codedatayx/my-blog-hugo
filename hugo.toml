@@ -1,0 +1,82 @@
+baseURL = "https://codedatayx.github.io/my-blog/"
+languageCode = "zh-CN"
+title = "杨轩的博客"
+theme = "PaperMod"
+[pagination]
+  pagerSize = 6
+enableRobotsTXT = true
+enableEmoji = true
+summarylength = 30
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+[minify]
+  disableXML = true
+  minifyOutput = true
+
+[params]
+  env = "production"
+  author = ["杨轩"]
+  defaultTheme = "auto"
+  ShowReadingTime = true
+  ShowShareButtons = true
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = true
+  ShowCodeCopyButtons = true
+  ShowWordCount = true
+  ShowToc = true
+  TocOpen = false
+  comments = false
+
+[params.homeInfoParams]
+  Title = "你好 👋"
+  Content = "我是杨轩，一个热爱技术的开发者。这里记录技术探索与生活感悟。"
+
+[[params.socialIcons]]
+  name = "github"
+  url = "https://github.com/codedatayx"
+
+[[params.socialIcons]]
+  name = "email"
+  url = "mailto:your@email.com"
+
+[menu]
+  [[menu.main]]
+    identifier = "posts"
+    name = "文章"
+    url = "/posts/"
+    weight = 10
+  [[menu.main]]
+    identifier = "categories"
+    name = "分类"
+    url = "/categories/"
+    weight = 20
+  [[menu.main]]
+    identifier = "tags"
+    name = "标签"
+    url = "/tags/"
+    weight = 30
+  [[menu.main]]
+    identifier = "archives"
+    name = "归档"
+    url = "/archives/"
+    weight = 40
+  [[menu.main]]
+    identifier = "search"
+    name = "搜索"
+    url = "/search/"
+    weight = 50
+  [[menu.main]]
+    identifier = "about"
+    name = "关于"
+    url = "/about/"
+    weight = 60
+
+[params.cover]
+  hiddenInList = true
+  hiddenInSingle = true
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
