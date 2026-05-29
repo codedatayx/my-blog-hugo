@@ -1,10 +1,11 @@
 import json
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 from chat import ChatService
+from agent import run_agent
 
 app = FastAPI(title="Blog Chat API")
 app.add_middleware(
@@ -75,3 +76,17 @@ async def get_profile(session_id: str):
 async def clear_session(session_id: str):
     await chat_service.clear_session(session_id)
     return {"status": "ok"}
+
+
+# ========== Blog Agent ==========
+
+@app.post("/api/agent/upload")
+async def agent_upload(file: UploadFile = File(...)):
+    content = await file.read()
+
+    async def event_stream():
+        async for step in run_agent(content, file.filename):
+            yield f"data: {json.dumps(step, ensure_ascii=False)}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")

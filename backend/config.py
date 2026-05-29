@@ -13,3 +13,8 @@ REDIS_MAX_TURNS = 20      # max turns in short-term memory
 COMPRESS_THRESHOLD = 10   # compress every N turns
 SUMMARY_MAX_TOKENS = 200
 CHAT_MAX_TOKENS = 600
+
+# Agent settings
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+GITHUB_REPO = os.getenv("GITHUB_REPO", "codedatayx/my-blog-hugo")
+GITHUB_BRANCH = os.getenv("GITHUB_BRANCH", "main")
