@@ -1,11 +1,398 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>管理后台 - 杨轩的博客</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; min-height: 100vh; }
+
+    .header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 1.2rem; color: #333; }
+    .header .status { font-size: 0.85rem; color: #888; }
+
+    .container { max-width: 860px; margin: 2rem auto; padding: 0 1.5rem; }
+
+    /* Token 设置 */
+    .token-bar { background: #fff; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+    .token-bar label { font-size: 0.9rem; font-weight: 600; display: block; margin-bottom: 0.5rem; }
+    .token-bar .hint { font-size: 0.8rem; color: #888; margin-bottom: 0.5rem; }
+    .token-bar .hint a { color: #c05845; }
+    .token-row { display: flex; gap: 0.5rem; }
+    .token-row input { flex: 1; padding: 0.6rem 0.85rem; border: 1.5px solid #ddd; border-radius: 8px; font-size: 0.9rem; outline: none; }
+    .token-row input:focus { border-color: #c05845; }
+    .token-row button { padding: 0.6rem 1.2rem; border-radius: 8px; border: none; background: #555; color: #fff; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .token-row button:hover { background: #333; }
+
+    /* 表单 */
+    .form-card { background: #fff; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+    .form-card h2 { font-size: 1.1rem; margin-bottom: 1.5rem; color: #333; }
+
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; color: #555; }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #ddd; border-radius: 8px;
+      font-size: 0.92rem; font-family: inherit; outline: none; transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #c05845; }
+    .form-group textarea { min-height: 360px; resize: vertical; line-height: 1.7; font-family: "JetBrains Mono", "Fira Code", Consolas, monospace; font-size: 0.88rem; }
+    .form-group .hint { font-size: 0.8rem; color: #999; margin-top: 0.3rem; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    /* 标签输入 */
+    .tags-input { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.5rem; border: 1.5px solid #ddd; border-radius: 8px; min-height: 42px; cursor: text; }
+    .tags-input:focus-within { border-color: #c05845; }
+    .tags-input .tag { display: inline-flex; align-items: center; gap: 0.3rem; background: #f0ece4; color: #5e6b50; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.82rem; }
+    .tags-input .tag .remove { cursor: pointer; font-size: 0.9rem; color: #999; }
+    .tags-input .tag .remove:hover { color: #c05845; }
+    .tags-input input { border: none; outline: none; flex: 1; min-width: 100px; font-size: 0.9rem; padding: 0.15rem; }
+
+    /* 按钮 */
+    .actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    .btn { padding: 0.7rem 2rem; border-radius: 8px; border: none; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: #c05845; color: #fff; }
+    .btn-primary:hover { background: #a84a3a; }
+    .btn-secondary { background: #e8e3da; color: #555; }
+    .btn-secondary:hover { background: #ddd6ca; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* 状态消息 */
+    .msg { padding: 0.75rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.9rem; display: none; }
+    .msg.success { display: block; background: #e8f5e9; color: #2e7d32; }
+    .msg.error { display: block; background: #fce4ec; color: #c62828; }
+    .msg.loading { display: block; background: #e3f2fd; color: #1565c0; }
+
+    /* 预览 */
+    .preview-toggle { font-size: 0.85rem; color: #c05845; cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; }
+    .preview-area { display: none; margin-top: 1rem; padding: 1.5rem; background: #fafafa; border: 1px solid #eee; border-radius: 8px; line-height: 1.8; font-size: 0.95rem; }
+    .preview-area pre { background: #f0ece4; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; }
+    .preview-area code { font-family: "JetBrains Mono", Consolas, monospace; font-size: 0.88em; background: #ede9e0; padding: 0.1rem 0.3rem; border-radius: 3px; }
+    .preview-area pre code { background: none; padding: 0; }
+  </style>
 </head>
 <body>
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+<div class="header">
+  <h1>📝 博客管理后台</h1>
+  <span class="status" id="headerStatus">未连接</span>
+</div>
+
+<div class="container">
+  <!-- Token 设置 -->
+  <div class="token-bar">
+    <label>GitHub Token</label>
+    <div class="hint">需要 <a href="https://github.com/settings/tokens/new?scopes=repo&description=my-blog" target="_blank">Personal Access Token</a>（勾选 repo 权限），首次使用需填写，之后自动保存。</div>
+    <div class="token-row">
+      <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
+      <button onclick="saveToken()">保存</button>
+    </div>
+  </div>
+
+  <!-- 发布表单 -->
+  <div class="form-card">
+    <h2>发布新文章</h2>
+
+    <div class="form-group">
+      <label>标题</label>
+      <input type="text" id="title" placeholder="文章标题">
+    </div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>分类</label>
+        <select id="category">
+          <option value="技术笔记">技术笔记</option>
+          <option value="学习心得">学习心得</option>
+          <option value="生活随笔">生活随笔</option>
+          <option value="项目记录">项目记录</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>日期</label>
+        <input type="date" id="date">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>标签</label>
+      <div class="tags-input" id="tagsContainer" onclick="document.getElementById('tagInput').focus()">
+        <input type="text" id="tagInput" placeholder="输入标签后按回车添加">
+      </div>
+      <div class="hint">按 Enter 添加标签，点击 × 删除</div>
+    </div>
+
+    <div class="form-group">
+      <label>摘要</label>
+      <input type="text" id="summary" placeholder="文章一句话描述（可选，不填则自动截取）">
+    </div>
+
+    <div class="form-group">
+      <label>正文内容（Markdown）</label>
+      <textarea id="content" placeholder="在这里写文章正文，支持 Markdown 语法：
+
+## 一级标题
+
+正文内容
+
+### 二级标题
+
+```python
+print('代码块')
+```
+
+- 列表项
+- 列表项
+
+> 引用"></textarea>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.3rem;">
+        <div class="hint">支持 Markdown：**加粗** *斜体* `行内代码` ```代码块``` [链接](url)</div>
+        <button class="preview-toggle" onclick="togglePreview()">预览</button>
+      </div>
+      <div class="preview-area" id="previewArea"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="publishBtn" onclick="publish()">发布文章</button>
+      <button class="btn btn-secondary" onclick="saveDraft()">保存草稿</button>
+    </div>
+
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script>
+  // ========== 配置 ==========
+  const REPO = 'codedatayx/my-blog-hugo';
+  const BRANCH = 'main';
+
+  // ========== 初始化 ==========
+  document.getElementById('date').value = new Date().toISOString().split('T')[0];
+
+  const savedToken = localStorage.getItem('blog_github_token');
+  if (savedToken) {
+    document.getElementById('tokenInput').value = savedToken;
+    document.getElementById('headerStatus').textContent = '已连接';
+    document.getElementById('headerStatus').style.color = '#2e7d32';
+  }
+
+  // ========== Token ==========
+  function saveToken() {
+    const token = document.getElementById('tokenInput').value.trim();
+    if (!token) return;
+    localStorage.setItem('blog_github_token', token);
+    document.getElementById('headerStatus').textContent = '已连接';
+    document.getElementById('headerStatus').style.color = '#2e7d32';
+    showMsg('Token 已保存', 'success');
+  }
+
+  // ========== 标签 ==========
+  let tags = [];
+  const tagInput = document.getElementById('tagInput');
+  const tagsContainer = document.getElementById('tagsContainer');
+
+  tagInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = tagInput.value.trim();
+      if (val && !tags.includes(val)) {
+        tags.push(val);
+        renderTags();
+      }
+      tagInput.value = '';
+    }
+  });
+
+  function renderTags() {
+    tagsContainer.innerHTML = tags.map((t, i) =>
+      `<span class="tag">${t}<span class="remove" onclick="removeTag(${i})">×</span></span>`
+    ).join('') + '<input type="text" id="tagInput" placeholder="输入标签后按回车添加">';
+    document.getElementById('tagInput').addEventListener('keydown', arguments.callee);
+    // Re-bind via event delegation
+    tagsContainer.querySelector('input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = e.target.value.trim();
+        if (val && !tags.includes(val)) {
+          tags.push(val);
+          renderTags();
+        }
+        e.target.value = '';
+      }
+    });
+  }
+
+  function removeTag(i) {
+    tags.splice(i, 1);
+    renderTags();
+  }
+
+  // ========== Markdown 预览 ==========
+  function togglePreview() {
+    const area = document.getElementById('previewArea');
+    if (area.style.display === 'block') {
+      area.style.display = 'none';
+    } else {
+      area.innerHTML = simpleMarkdown(document.getElementById('content').value);
+      area.style.display = 'block';
+    }
+  }
+
+  function simpleMarkdown(md) {
+    let html = md
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/\n{2,}/g, '</p><p>')
+      .replace(/\n/g, '<br>');
+    return '<p>' + html + '</p>';
+  }
+
+  // ========== 生成 Frontmatter ==========
+  function generateFrontmatter() {
+    const title = document.getElementById('title').value.trim();
+    const category = document.getElementById('category').value;
+    const date = document.getElementById('date').value;
+    const summary = document.getElementById('summary').value.trim();
+    const content = document.getElementById('content').value;
+
+    let fm = '---\n';
+    fm += `title: "${title}"\n`;
+    fm += `date: ${date}\n`;
+    if (summary) fm += `description: "${summary}"\n`;
+    fm += `author: "杨轩"\n`;
+    fm += `tags: [${tags.map(t => `"${t}"`).join(', ')}]\n`;
+    fm += `categories: ["${category}"]\n`;
+    fm += `showtoc: true\n`;
+    fm += `ShowReadingTime: true\n`;
+    fm += `ShowCodeCopyButtons: true\n`;
+    fm += '---\n\n';
+    fm += content;
+    return fm;
+  }
+
+  function getFilename() {
+    const title = document.getElementById('title').value.trim();
+    const date = document.getElementById('date').value;
+    if (!title) return null;
+    const slug = title.toLowerCase()
+      .replace(/[^\w\u4e00-\u9fff]+/g, '-')
+      .replace(/^-|-$/g, '');
+    return `content/posts/${date.replace(/-/g, '')}-${slug}.md`;
+  }
+
+  // ========== 发布 ==========
+  async function publish() {
+    const title = document.getElementById('title').value.trim();
+    const content = document.getElementById('content').value.trim();
+
+    if (!title) return showMsg('请输入标题', 'error');
+    if (!content) return showMsg('请输入正文内容', 'error');
+
+    const token = localStorage.getItem('blog_github_token');
+    if (!token) return showMsg('请先填写 GitHub Token', 'error');
+
+    const filename = getFilename();
+    if (!filename) return showMsg('无法生成文件名', 'error');
+
+    const fileContent = generateFrontmatter();
+    const encoded = btoa(unescape(encodeURIComponent(fileContent)));
+
+    const btn = document.getElementById('publishBtn');
+    btn.disabled = true;
+    showMsg('正在发布...', 'loading');
+
+    try {
+      // 检查文件是否已存在
+      let sha = null;
+      try {
+        const checkRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}?ref=${BRANCH}`, {
+          headers: { 'Authorization': `token ${token}` }
+        });
+        if (checkRes.ok) {
+          const existing = await checkRes.json();
+          sha = existing.sha;
+        }
+      } catch (_) {}
+
+      const body = {
+        message: `feat: 新增文章「${title}」`,
+        content: encoded,
+        branch: BRANCH,
+      };
+      if (sha) body.sha = sha;
+
+      const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        showMsg('发布成功！GitHub Actions 正在构建，约 1 分钟后可访问。', 'success');
+        // 清空表单
+        document.getElementById('title').value = '';
+        document.getElementById('content').value = '';
+        document.getElementById('summary').value = '';
+        tags = [];
+        renderTags();
+      } else {
+        const err = await res.json();
+        showMsg('发布失败: ' + (err.message || '未知错误'), 'error');
+      }
+    } catch (e) {
+      showMsg('网络错误: ' + e.message, 'error');
+    }
+
+    btn.disabled = false;
+  }
+
+  // ========== 保存草稿 ==========
+  function saveDraft() {
+    const data = {
+      title: document.getElementById('title').value,
+      category: document.getElementById('category').value,
+      date: document.getElementById('date').value,
+      summary: document.getElementById('summary').value,
+      content: document.getElementById('content').value,
+      tags: tags,
+    };
+    localStorage.setItem('blog_draft', JSON.stringify(data));
+    showMsg('草稿已保存到浏览器本地', 'success');
+  }
+
+  // 恢复草稿
+  const draft = localStorage.getItem('blog_draft');
+  if (draft) {
+    try {
+      const d = JSON.parse(draft);
+      if (d.title) document.getElementById('title').value = d.title;
+      if (d.category) document.getElementById('category').value = d.category;
+      if (d.date) document.getElementById('date').value = d.date;
+      if (d.summary) document.getElementById('summary').value = d.summary;
+      if (d.content) document.getElementById('content').value = d.content;
+      if (d.tags) { tags = d.tags; renderTags(); }
+    } catch (_) {}
+  }
+
+  // ========== 消息 ==========
+  function showMsg(text, type) {
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.className = 'msg ' + type;
+  }
+</script>
+
 </body>
 </html>
