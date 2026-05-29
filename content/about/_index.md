@@ -21,4 +21,4 @@ layout: "about"
 ## 联系方式
 
 - [GitHub](https://github.com/codedatayx)
-- Email: your@email.com
+- Email: 1635948202@qq.com
